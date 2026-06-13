@@ -1,6 +1,6 @@
 {
   "framework": "nextjs",
-  "buildCommand": "pnpm db:migrate:prod && pnpm build",
+  "buildCommand": "pnpm build",
   "installCommand": "pnpm install",
   "regions": ["bom1"],
   "env": {
