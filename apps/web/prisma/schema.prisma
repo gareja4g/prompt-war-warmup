@@ -1,0 +1,342 @@
+// This is your Prisma schema file
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum ExamType {
+  NEET
+  JEE
+  CUET
+  CAT
+  GATE
+  UPSC
+  BOARD
+}
+
+enum Mood {
+  ECSTATIC
+  HAPPY
+  CALM
+  NEUTRAL
+  UNEASY
+  SAD
+  ANXIOUS
+  OVERWHELMED
+  EXHAUSTED
+  ANGRY
+}
+
+enum InsightType {
+  BURNOUT
+  STRESS
+  MOTIVATION
+  ANXIETY
+  CONFIDENCE
+  POSITIVE
+  CRISIS
+  RECOVERY
+}
+
+enum NotificationType {
+  WELLNESS_CHECK
+  ACHIEVEMENT
+  REMINDER
+  CRISIS_RESOURCE
+  INSIGHT
+  STREAK
+}
+
+enum AchievementType {
+  STREAK_3
+  STREAK_7
+  STREAK_30
+  JOURNAL_10
+  JOURNAL_50
+  JOURNAL_100
+  MOOD_TRACKER
+  RECOVERY_CHAMPION
+  WELLNESS_WARRIOR
+  FIRST_ENTRY
+  CONSISTENCY_KING
+  MINDFUL_WEEK
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  name          String?
+  image         String?
+  password      String?
+  role          String    @default("user")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts       Account[]
+  sessions       Session[]
+  profile        Profile?
+  journalEntries JournalEntry[]
+  moodLogs       MoodLog[]
+  aiInsights     AIInsight[]
+  conversations  Conversation[]
+  wellnessScores WellnessScore[]
+  achievements   UserAchievement[]
+  notifications  Notification[]
+  auditLogs      AuditLog[]
+  settings       Settings?
+  studyLogs      StudyLog[]
+
+  @@index([email])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Profile {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  examType         ExamType @default(NEET)
+  targetYear       Int      @default(2025)
+  studyHoursPerDay Float    @default(8)
+  sleepHoursTarget Float    @default(7)
+  bio              String?  @db.Text
+  city             String?
+  onboardingDone   Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model JournalEntry {
+  id             String   @id @default(cuid())
+  userId         String
+  title          String
+  content        String   @db.Text
+  mood           Mood     @default(NEUTRAL)
+  sentiment      Float    @default(0)
+  aiInsight      String?  @db.Text
+  tags           String[]
+  wordCount      Int      @default(0)
+  isPrivate      Boolean  @default(false)
+  gratitudeItems String[]
+  studyHours     Float?
+  sleepHours     Float?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  aiInsights AIInsight[]
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([userId, mood])
+}
+
+model MoodLog {
+  id        String   @id @default(cuid())
+  userId    String
+  mood      Mood
+  intensity Int      @default(5)
+  notes     String?  @db.Text
+  factors   String[]
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+}
+
+model AIInsight {
+  id          String      @id @default(cuid())
+  userId      String
+  journalId   String?
+  insightType InsightType
+  content     String      @db.Text
+  confidence  Float       @default(0)
+  actionItems String[]
+  isRead      Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+
+  user    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  journal JournalEntry? @relation(fields: [journalId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([userId, insightType])
+  @@index([userId, isRead])
+}
+
+model Conversation {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String   @default("New Conversation")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  @@index([userId, updatedAt(sort: Desc)])
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  conversationId String
+  role           String
+  content        String   @db.Text
+  tokensUsed     Int?
+  createdAt      DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt(sort: Asc)])
+}
+
+model WellnessScore {
+  id              String   @id @default(cuid())
+  userId          String
+  overallScore    Float
+  burnoutRisk     Float
+  anxietyScore    Float
+  motivationScore Float
+  recoveryScore   Float
+  studyBalance    Float    @default(0.5)
+  date            DateTime @default(now()) @db.Date
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId, date(sort: Desc)])
+}
+
+model StudyLog {
+  id             String   @id @default(cuid())
+  userId         String
+  date           DateTime @default(now()) @db.Date
+  hoursStudied   Float
+  hoursSlept     Float?
+  hoursExercised Float?
+  breaksTaken    Int      @default(0)
+  notes          String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId, date(sort: Desc)])
+}
+
+model Achievement {
+  id          String          @id @default(cuid())
+  type        AchievementType @unique
+  title       String
+  description String
+  iconName    String
+  xpReward    Int             @default(0)
+  createdAt   DateTime        @default(now())
+
+  userAchievements UserAchievement[]
+}
+
+model UserAchievement {
+  id            String   @id @default(cuid())
+  userId        String
+  achievementId String
+  earnedAt      DateTime @default(now())
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  body      String           @db.Text
+  read      Boolean          @default(false)
+  data      Json?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([userId, createdAt(sort: Desc)])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  resource  String
+  details   Json?
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([action, createdAt(sort: Desc)])
+}
+
+model Settings {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  notifyWellnessCheck   Boolean  @default(true)
+  notifyAchievements    Boolean  @default(true)
+  notifyInsights        Boolean  @default(true)
+  notifyReminders       Boolean  @default(true)
+  reminderTime          String   @default("20:00")
+  privacyJournalDefault Boolean  @default(false)
+  theme                 String   @default("system")
+  examType              ExamType @default(NEET)
+  language              String   @default("en")
+  aiPersonality         String   @default("supportive")
+  updatedAt             DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

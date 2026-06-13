@@ -1,0 +1,31 @@
+{
+  "name": "mindwell-monorepo",
+  "private": true,
+  "packageManager": "pnpm@9.0.0",
+  "engines": { "node": ">=20.0.0", "pnpm": ">=9.0.0" },
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "build": "pnpm --filter web build",
+    "start": "pnpm --filter web start",
+    "lint": "pnpm --filter web lint",
+    "test": "pnpm --filter web test",
+    "test:e2e": "pnpm --filter web test:e2e",
+    "db:generate": "pnpm --filter web db:generate",
+    "db:push": "pnpm --filter web db:push",
+    "db:migrate": "pnpm --filter web db:migrate",
+    "db:seed": "pnpm --filter web db:seed",
+    "db:studio": "pnpm --filter web db:studio",
+    "typecheck": "pnpm --filter web typecheck",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3",
+    "husky": "^9.1.6",
+    "lint-staged": "^15.2.10"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": ["eslint --fix", "prettier --write"],
+    "*.{json,md}": ["prettier --write"]
+  }
+}
