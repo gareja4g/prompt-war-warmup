@@ -6,7 +6,7 @@
 
 2. Build & Install commands
 - Install Command: `pnpm install`
-- Build Command: `pnpm build` (the repository root `vercel.json` already sets this)
+- Build Command: `pnpm build` (the project's `apps/web/vercel.json` already sets this)
 
 3. Node & PNPM
 - Ensure Node version >= 20 and PNPM >= 9. Either set in project settings or rely on `engines` in `apps/web/package.json`.

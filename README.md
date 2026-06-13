@@ -70,7 +70,7 @@ Recommended Vercel settings:
 - **Regions**: set as needed (the repo's `vercel.json` includes `bom1`)
 
 Important:
-- Do not run DB migrations during the Vercel build. The repository `vercel.json` has been updated to avoid running migrations at build time. Run migrations separately using CI or a one-off run:
+- Do not run DB migrations during the Vercel build. The project's `apps/web/vercel.json` has been updated to avoid running migrations at build time. Run migrations separately using CI or a one-off run:
 
 ```bash
 pnpm --filter web db:migrate:prod
